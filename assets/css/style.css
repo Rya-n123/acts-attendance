@@ -1,0 +1,478 @@
+/* assets/css/style.css */
+
+:root {
+    --acts-green: #033500;
+    --acts-yellow: #FFD700;
+    --acts-white: #FFFFFF;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.login-container {
+    background-color: var(--acts-white);
+    padding: 40px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 350px;
+    text-align: center;
+    border-top: 6px solid var(--acts-green);
+}
+
+.login-container h2 {
+    color: var(--acts-green);
+    margin-bottom: 5px;
+    margin-top: 0;
+}
+
+.login-container p {
+    color: #555;
+    font-size: 14px;
+    margin-bottom: 25px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: var(--acts-green);
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 15px;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--acts-green);
+    box-shadow: 0 0 5px rgba(3, 53, 0, 0.3);
+}
+
+.btn-login {
+    background-color: var(--acts-green);
+    color: var(--acts-white);
+    border: none;
+    padding: 12px;
+    width: 100%;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-login:hover {
+    background-color: #022200;
+    color: var(--acts-yellow);
+}
+
+.error-msg {
+    background-color: #ffe6e6;
+    color: #d9534f;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* =========================================
+   4. SCANNER UI (MOBILE) STYLES - UPDATED
+========================================= */
+.scanner-header {
+    background-color: var(--acts-green);
+    color: var(--acts-white);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.scanner-header h3 {
+    margin: 0;
+    color: var(--acts-yellow);
+    font-size: 18px;
+}
+.scanner-container {
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+.action-toggle {
+    display: flex;
+    gap: 10px;
+    background: #fff;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.btn-toggle {
+    flex: 1;
+    padding: 15px 10px;
+    border: 2px solid #ddd;
+    background-color: #f9f9f9;
+    color: #888;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.btn-toggle.active {
+    border-color: var(--acts-green);
+    background-color: var(--acts-yellow);
+    color: var(--acts-green);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+#reader {
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 4px solid var(--acts-green);
+    background-color: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+}
+/* Itago ang lumang picture ng kamay na may cellphone */
+#reader img {
+    display: none !important;
+}
+/* Palitan ng modernong camera icon at isentro nang maayos */
+#reader__dashboard_section_csr {
+    text-align: center !important;
+    width: 100% !important;
+}
+#reader__dashboard_section_csr::before {
+    content: "📷";
+    font-size: 50px;
+    display: block;
+    margin: 15px auto 10px auto !important;
+    text-align: center !important;
+    width: 100% !important;
+}
+/* Ayusin ang mga buttons ng Camera Plugin */
+#reader button {
+    background-color: var(--acts-green) !important;
+    color: var(--acts-white) !important;
+    border: none !important;
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    margin: 10px 5px !important;
+    transition: 0.3s !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+}
+#reader button:hover {
+    background-color: #022200 !important;
+    color: var(--acts-yellow) !important;
+}
+#reader a {
+    color: var(--acts-green) !important;
+    font-weight: bold !important;
+    text-decoration: none !important;
+}
+#reader a:hover {
+    color: #022200 !important;
+    text-decoration: underline !important;
+}
+#reader select {
+    padding: 10px !important;
+    border: 2px solid var(--acts-green) !important;
+    border-radius: 8px !important;
+    margin: 10px 0 !important;
+    width: 90% !important;
+    font-size: 14px !important;
+    background-color: #f9f9f9 !important;
+}
+#scan-result {
+    margin-bottom: 20px;
+    padding: 18px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    display: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.manual-search-box {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    border-top: 5px solid var(--acts-green);
+}
+.manual-search-box input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+.btn-search {
+    background-color: var(--acts-yellow);
+    color: var(--acts-green);
+    border: none;
+    padding: 12px;
+    width: 100%;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* =========================================
+   5. ADMIN DASHBOARD STYLES
+========================================= */
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    background-color: #f4f6f9;
+}
+.sidebar {
+    width: 250px;
+    background-color: var(--acts-green);
+    color: var(--acts-white);
+    display: flex;
+    flex-direction: column;
+}
+.sidebar-header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sidebar-header h2 {
+    color: var(--acts-yellow);
+    margin: 0;
+    font-size: 22px;
+}
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.sidebar-menu li a {
+    display: block;
+    padding: 15px 20px;
+    color: var(--acts-white);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: 0.3s;
+}
+.sidebar-menu li a:hover, .sidebar-menu li a.active {
+    background-color: #022200;
+    color: var(--acts-yellow);
+    border-left: 4px solid var(--acts-yellow);
+}
+.main-content {
+    flex: 1;
+    padding: 20px 30px;
+    overflow-y: auto;
+}
+.top-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+.stat-cards {
+    display: flex;
+    gap: 20px;
+}
+.card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    flex: 1;
+    border-top: 4px solid var(--acts-yellow);
+}
+.card h3 {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+.card .number {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--acts-green);
+    margin-top: 10px;
+}
+
+/* =========================================
+   6. DATA TABLES & FORMS (ADMIN)
+========================================= */
+.admin-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+.admin-card form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.table-responsive {
+    overflow-x: auto;
+}
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+.data-table th, .data-table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+    font-size: 14px;
+}
+.data-table th {
+    background-color: var(--acts-green);
+    color: var(--acts-yellow);
+}
+.data-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+.btn-primary {
+    background-color: var(--acts-green);
+    color: var(--acts-white);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn-primary:hover {
+    background-color: #022200;
+}
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+/* =========================================
+   7. REPORTS FILTER FORM
+========================================= */
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end;
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 150px;
+}
+.filter-group label {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--acts-green);
+    margin-bottom: 5px;
+}
+.filter-group select, .filter-group input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.badge-present {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+.badge-absent {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+.badge-late {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+.badge-early {
+    background-color: #ffeeba;
+    color: #d39e00;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+.badge-active {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+}
+.badge-inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+}
+.btn-status {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+
+
