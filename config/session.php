@@ -1,12 +1,23 @@
 <?php
 // config/session.php
 
+// =========================================
+// SECURITY HEADERS (For A+ Security Grade)
+// =========================================
+header("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload");
+header("X-Frame-Options: SAMEORIGIN");
+header("X-Content-Type-Options: nosniff");
+header("Referrer-Policy: strict-origin-when-cross-origin");
+// Naka-allow ang camera dito para sa QR/Barcode Scanner natin
+header("Permissions-Policy: camera=(self), microphone=(), geolocation=()");
+
 // Secure session cookie settings
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
     'httponly' => true,
-    'samesite' => 'Strict'
+    'samesite' => 'Strict',
+    'secure' => true // Naka-ON na ito dahil naka-HTTPS na ang Acts Attendance online!
 ]);
 
 session_start();

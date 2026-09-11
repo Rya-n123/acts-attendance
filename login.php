@@ -50,15 +50,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acts Attendance System - Login</title>
+    <title>ACTS Computer College - Attendance System</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <!-- PWA Support -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#033500">
+    <link rel="apple-touch-icon" href="assets/img/acts-logo.png">
     <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <div class="login-container">
-        <h2>Acts Attendance</h2>
-        <p>System Login</p>
+        <img src="assets/img/acts-logo.png" alt="ACTS Logo" style="width: 100px; height: 100px; margin-bottom: 10px; border-radius: 50%; border: 3px solid var(--acts-green); object-fit: cover;">
+        <h2 style="margin-bottom: 2px;">ACTS Computer College</h2>
+        <p style="margin-bottom: 5px; font-weight: bold; color: var(--acts-green); font-size: 13px;">Attendance System</p>
+        <p style="font-size: 11px; color: #999; margin-bottom: 20px;">Enter your credentials to access the system</p>
 
         <form method="POST" action="">
             <div class="form-group">
@@ -115,5 +121,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             window.history.replaceState(null, null, window.location.pathname);
         <?php endif; ?>
     </script>
+
+    <script>
+        // PWA: I-register ang Service Worker sa Login Page para ma-detect as "Real App"
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('ACTS App Engine Ready on Login!'))
+                .catch(err => console.log('App Engine failed:', err));
+        }
+    </script>
+</body>
+</html>
 </body>
 </html>

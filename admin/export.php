@@ -16,14 +16,18 @@ $current_time = date('H:i:s');
 $filter_course = isset($_GET['course_strand']) ? $_GET['course_strand'] : '';
 $filter_year = isset($_GET['year_grade_level']) ? $_GET['year_grade_level'] : '';
 $filter_section = isset($_GET['section']) ? $_GET['section'] : '';
+$filter_event = isset($_GET['event_id']) ? $_GET['event_id'] : '';
 
 $sql = "SELECT s.student_number, s.first_name, s.middle_initial, s.last_name, s.department, s.course_strand, s.year_grade_level, s.section, 
-               a.time_in, a.time_out, a.time_in_status, a.time_out_status 
+               a.time_in, a.time_out, a.time_in_status, a.time_out_status,
+               e.event_name
         FROM students s 
-        LEFT JOIN attendance a ON s.id = a.student_id AND a.date = :date 
+        LEFT JOIN attendance a ON s.id = a.student_id AND a.date = :date" . (!empty($filter_event) ? " AND a.event_id = :event_id" : "") . "
+        LEFT JOIN events e ON a.event_id = e.id
         WHERE s.status = 'Active'";
 
 $params = [':date' => $filter_date];
+if (!empty($filter_event)) { $params[':event_id'] = $filter_event; }
 
 if (!empty($filter_dept)) { $sql .= " AND s.department = :dept"; $params[':dept'] = $filter_dept; }
 if (!empty($filter_course)) { $sql .= " AND s.course_strand = :course"; $params[':course'] = $filter_course; }
@@ -44,7 +48,7 @@ $output = fopen('php://output', 'w');
 fputs($output, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 
 // UPDATE: Idinagdag ang 'M.I.' sa mismong Headers para pumantay sa data!
-fputcsv($output, ['Student No.', 'Last Name', 'First Name', 'M.I.', 'Department', 'Course/Strand', 'Year/Grade Level', 'Section', 'Time In', 'Time In Status', 'Time Out', 'Time Out Status']);
+fputcsv($output, ['Student No.', 'Last Name', 'First Name', 'M.I.', 'Department', 'Course/Strand', 'Year/Grade Level', 'Section', 'Event', 'Time In', 'Time In Status', 'Time Out', 'Time Out Status']);
 
 foreach ($reports as $row) {
     $time_in_display = $row['time_in'] ? date("h:i A", strtotime($row['time_in'])) : '--:--';
@@ -67,11 +71,12 @@ foreach ($reports as $row) {
         $row['student_number'],
         $row['last_name'],
         $row['first_name'],
-        $row['middle_initial'], // Idinagdag ang M.I. dito
+        $row['middle_initial'],
         $row['department'],
         $row['course_strand'],
         $row['year_grade_level'],
         $row['section'],
+        $row['event_name'] ?? 'N/A',
         $time_in_display,
         $in_status,
         $time_out_display,

@@ -12,6 +12,15 @@ $filter_course = isset($_GET['course_strand']) ? $_GET['course_strand'] : '';
 $filter_year = isset($_GET['year_grade_level']) ? $_GET['year_grade_level'] : '';
 $filter_section = isset($_GET['section']) ? $_GET['section'] : '';
 $filter_status = isset($_GET['status']) ? $_GET['status'] : '';
+$filter_event = isset($_GET['event_id']) ? $_GET['event_id'] : '';
+
+// Load event name for display
+$event_display_name = '';
+if (!empty($filter_event)) {
+    $stmtEvt = $pdo->prepare("SELECT event_name FROM events WHERE id = ?");
+    $stmtEvt->execute([$filter_event]);
+    $event_display_name = $stmtEvt->fetchColumn();
+}
 
 // Settings
 $stmtSettings = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'time_in_absent'");
@@ -24,10 +33,11 @@ $current_time = date('H:i:s');
 $sql = "SELECT s.student_number, s.first_name, s.middle_initial, s.last_name, s.department, s.course_strand, s.year_grade_level, s.section, 
                a.time_in, a.time_out, a.time_in_status, a.time_out_status 
         FROM students s 
-        LEFT JOIN attendance a ON s.id = a.student_id AND a.date = :date 
+        LEFT JOIN attendance a ON s.id = a.student_id AND a.date = :date" . (!empty($filter_event) ? " AND a.event_id = :event_id" : "") . "
         WHERE s.status = 'Active'";
 
 $params = [':date' => $filter_date];
+if (!empty($filter_event)) { $params[':event_id'] = $filter_event; }
 if (!empty($filter_dept)) { $sql .= " AND s.department = :dept"; $params[':dept'] = $filter_dept; }
 if (!empty($filter_course)) { $sql .= " AND s.course_strand = :course"; $params[':course'] = $filter_course; }
 if (!empty($filter_year)) { $sql .= " AND s.year_grade_level = :year"; $params[':year'] = $filter_year; }
@@ -97,20 +107,29 @@ foreach ($reports as $row) {
             .no-print { display: none !important; } /* Ito ang magtatago sa buttons kapag ipi-print na */
         }
     </style>
+<!-- Pampa-convert ng HTML to Direct PDF Download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
-    <!-- ACTION BAR (Makikita lang sa screen, hindi sa papel) -->
+<!-- ACTION BAR (Makikita lang sa screen, hindi sa papel) -->
     <div class="no-print" style="background-color: #f8f9fa; padding: 15px; text-align: right; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px;">
         <span style="float: left; font-weight: bold; color: #555; line-height: 35px;">📄 Document Preview Mode</span>
-        <button onclick="window.print()" style="background-color: #17a2b8; color: white; border: none; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-right: 10px;">🖨️ Print / Save as PDF</button>
-        <button onclick="window.close()" style="background-color: #dc3545; color: white; border: none; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 5px; cursor: pointer;">❌ Close View</button>
+        <button onclick="downloadDirectPDF()" style="background-color: #dc3545; color: white; border: none; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-right: 10px;">📥 Download PDF</button>
+        <button onclick="window.print()" style="background-color: #17a2b8; color: white; border: none; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-right: 10px;">🖨️ Print</button>
+        <button onclick="window.close()" style="background-color: #6c757d; color: white; border: none; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 5px; cursor: pointer;">❌ Close View</button>
     </div>
 
+<div id="report-content" style="background: white; padding: 10px;">
     <div class="header">
-        <h1>ACTS Attendance System</h1>
-        <p>Daily Attendance Summary Report</p>
+        <img src="../assets/img/acts-logo.png" alt="ACTS Logo" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover;">
+        <h1 style="margin: 5px 0 0 0;">ACTS Computer College</h1>
+        <p style="font-size: 12px; color: #666; margin: 2px 0;">Attendance System</p>
+        <p style="margin-top: 5px;">Event Attendance Summary Report</p>
         <p><strong>Date: <?php echo $display_date; ?></strong></p>
+        <?php if (!empty($event_display_name)): ?>
+            <p><strong>Event: <?php echo htmlspecialchars($event_display_name); ?></strong></p>
+        <?php endif; ?>
     </div>
 
     <div class="filters">
@@ -148,9 +167,31 @@ foreach ($reports as $row) {
                         <td><?php echo htmlspecialchars($row['last_name'] . ', ' . $row['first_name'] . ' ' . $row['middle_initial']); ?></td>
                         <td><?php echo htmlspecialchars($row['section']); ?></td>
                         <td><?php echo $row['time_in'] ? date("h:i A", strtotime($row['time_in'])) : '--:--'; ?></td>
-                        <td><?php echo $row['calculated_in_status']; ?></td>
+                        
+                        <!-- DITO NATIN NILAGYAN NG KULAY ANG IN STATUS -->
+                        <?php 
+                            $inStatus = $row['calculated_in_status'];
+                            $inColor = '#17a2b8'; // Blue (Pending)
+                            if ($inStatus == 'Present') $inColor = '#28a745'; // Green
+                            if ($inStatus == 'Late') $inColor = '#856404'; // Yellow/Orange
+                            if ($inStatus == 'Absent') $inColor = '#dc3545'; // Red
+                        ?>
+                        <td style="color: <?php echo $inColor; ?>; font-weight: bold;">
+                            <?php echo htmlspecialchars($inStatus); ?>
+                        </td>
+
                         <td><?php echo $row['time_out'] ? date("h:i A", strtotime($row['time_out'])) : '--:--'; ?></td>
-                        <td><?php echo $row['time_out_status'] ?: '--'; ?></td>
+                        
+                        <!-- DITO NATIN NILAGYAN NG KULAY ANG OUT STATUS -->
+                        <?php 
+                            $outStatus = $row['time_out_status'] ?: '--';
+                            $outColor = '#333'; // Default
+                            if ($outStatus == 'Normal Out') $outColor = '#28a745'; // Green
+                            if ($outStatus == 'Early Out') $outColor = '#856404'; // Yellow
+                        ?>
+                        <td style="color: <?php echo $outColor; ?>; font-weight: bold;">
+                            <?php echo htmlspecialchars($outStatus); ?>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
@@ -167,7 +208,25 @@ foreach ($reports as $row) {
             <div class="sign-line">Noted By (Adviser / Principal)</div>
         </div>
     </div>
-
+</div> <!-- DITO NATIN INILIPAT ANG CLOSING DIV PARA MASAMA ANG FOOTER SA PDF -->
+<script>
+        function downloadDirectPDF() {
+            // Kunin yung laman ng #report-content
+            var element = document.getElementById('report-content');
+            
+            // Set ang pangalan ng file at quality
+            var opt = {
+                margin:       0.5,
+                filename:     'ACTS_Attendance_Report_<?php echo $filter_date; ?>.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            
+            // I-download nang direkta!
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
     
 </body>
 </html>

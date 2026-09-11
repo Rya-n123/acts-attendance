@@ -81,14 +81,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (empty($error) && isset($_POST['delete_student'])) {
         $id = $_POST['student_id'];
         try {
+            $pdo->beginTransaction();
             // Delete attendance records first to avoid orphaned data
             $stmtDelAtt = $pdo->prepare("DELETE FROM attendance WHERE student_id = ?");
             $stmtDelAtt->execute([$id]);
             $stmtDelStu = $pdo->prepare("DELETE FROM students WHERE id = ?");
             $stmtDelStu->execute([$id]);
+            $pdo->commit();
             $message = "Student successfully deleted from the database.";
             logActivity($pdo, 'Delete Student', "Deleted student ID: $id");
         } catch (Exception $e) {
+            $pdo->rollBack();
             $error = "Error deleting student.";
         }
     }
@@ -125,7 +128,7 @@ if (isset($_POST['import']) && validateCsrfToken()) {
                     continue;
                 }
                 
-                if (!empty($data[0])) {
+                if (!empty($data[0]) && count($data) >= 8) {
                     $stmt->execute([
                         trim($data[0]), // Col 1: Student Number
                         trim($data[1]), // Col 2: First Name

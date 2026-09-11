@@ -1,25 +1,40 @@
 <?php
 // scanner/index.php
 require_once '../config/session.php';
+require_once '../config/db.php';
 requireScanner(); // Ensure user is logged in
+
+// Load active events
+$stmtEvents = $pdo->query("SELECT id, event_name, event_date FROM events WHERE status = 'Active' ORDER BY event_date DESC");
+$activeEvents = $stmtEvents->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner - Acts Attendance</title>
+    <title>ACTS Scanner - Attendance System</title>
     <!-- CSS is now fully loaded from style.css -->
     <link rel="stylesheet" href="../assets/css/style.css">
+    <!-- PWA Support -->
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#033500">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ACTS Scanner">
+    <link rel="apple-touch-icon" href="../assets/img/acts-logo.png">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body style="display: block; height: auto;">
 
     <div class="scanner-header">
-        <div>
-            <h3>Acts Scanner</h3>
-            <p style="margin: 3px 0 0 0; font-size: 12px; opacity: 0.8;">Logged in as: <b><?php echo htmlspecialchars($_SESSION['username']); ?></b></p>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="../assets/img/acts-logo.png" alt="ACTS" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--acts-yellow); object-fit: cover;">
+            <div>
+                <h3 style="margin: 0;">ACTS Scanner</h3>
+                <p style="margin: 2px 0 0 0; font-size: 11px; opacity: 0.8;">Logged in: <b><?php echo htmlspecialchars($_SESSION['username']); ?></b></p>
+            </div>
         </div>
         <a href="../logout.php" style="color: var(--acts-white); font-size: 13px; font-weight: bold; text-decoration: none; padding: 5px 10px; border: 1px solid rgba(255,255,255,0.5); border-radius: 5px;">Logout</a>
     </div>
@@ -30,6 +45,22 @@ requireScanner(); // Ensure user is logged in
         <div style="text-align: center; background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; border-top: 4px solid var(--acts-green);">
             <p style="margin: 0; font-size: 12px; color: #888; font-weight: bold;">CURRENT TIME</p>
             <h1 id="scanner-clock" style="margin: 5px 0 0 0; color: var(--acts-green); font-size: 34px; letter-spacing: 1px;">--:--:-- --</h1>
+        </div>
+
+        <!-- Step 0: Select Event -->
+        <div style="background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; border-top: 4px solid #ffc107;">
+            <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold; color: var(--acts-green);">🎪 Select Event</p>
+            <?php if (empty($activeEvents)): ?>
+                <p style="color: #dc3545; font-weight: bold; text-align: center; padding: 10px;">⚠️ No active events. Ask admin to create an event first.</p>
+            <?php else: ?>
+                <select id="event-select" style="width: 100%; padding: 12px; border: 2px solid var(--acts-green); border-radius: 8px; font-size: 15px; font-weight: bold; background: #f8f9fa;" onchange="updateEventDisplay()">
+                    <?php foreach ($activeEvents as $evt): ?>
+                        <option value="<?php echo $evt['id']; ?>">
+                            <?php echo htmlspecialchars($evt['event_name']); ?> — <?php echo date('M d, Y', strtotime($evt['event_date'])); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            <?php endif; ?>
         </div>
 
         <!-- Step 1: Action Selection -->
@@ -76,7 +107,26 @@ requireScanner(); // Ensure user is logged in
             }
         }
 
-        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+            fps: 15,
+            qrbox: { width: 300, height: 300 },
+            // Support BOTH QR codes AND 1D barcodes (CODE_128, CODE_39, EAN, etc.)
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.QR_CODE,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.CODE_93
+            ],
+            // Prefer BACK camera (mas mataas ang resolution = mas mabilis mag-scan!)
+            videoConstraints: {
+                facingMode: "environment"
+            },
+            aspectRatio: 1.0,
+            showTorchButtonIfSupported: true,
+            showZoomSliderIfSupported: true
+        }, false);
 
         function onScanSuccess(decodedText, decodedResult) {
             safePauseScanner();
@@ -111,6 +161,10 @@ requireScanner(); // Ensure user is logged in
 
         function processAttendance(studentData, step = 'check') {
             if (!studentData || studentData.trim() === '') return;
+            
+            // Block scanning kung walang event
+            const eventId = getSelectedEventId();
+            if (eventId === null) return;
 
             let resultBox = document.getElementById('scan-result');
             let searchResultsList = document.getElementById('search-results-list');
@@ -128,7 +182,7 @@ requireScanner(); // Ensure user is logged in
             fetch('process_scan.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'student_data=' + encodeURIComponent(studentData) + '&scan_type=' + encodeURIComponent(currentAction) + '&step=' + step
+                body: 'student_data=' + encodeURIComponent(studentData) + '&scan_type=' + encodeURIComponent(currentAction) + '&step=' + step + '&event_id=' + eventId
             })
             .then(response => response.json())
             .then(data => {
@@ -217,8 +271,28 @@ requireScanner(); // Ensure user is logged in
         setInterval(updateScannerClock, 1000);
         updateScannerClock();
 
+        function getSelectedEventId() {
+            const select = document.getElementById('event-select');
+            if (!select || !select.value) {
+                Swal.fire('Error', 'No active event selected. Please ask admin to create an event first.', 'error');
+                return null;
+            }
+            return select.value;
+        }
+
+        function updateEventDisplay() {
+            // Optional: visual feedback when event changes
+        }
+
         let debounceTimer;
         const searchInput = document.getElementById('manual-input');
+
+        // PWA: Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('../sw.js')
+                .then(reg => console.log('ACTS SW registered:', reg.scope))
+                .catch(err => console.log('SW registration failed:', err));
+        }
 
         searchInput.addEventListener('input', function() {
             const query = this.value.trim();

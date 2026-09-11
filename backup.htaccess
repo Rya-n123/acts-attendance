@@ -1,0 +1,18 @@
+# =========================================
+# ACTS Attendance System - Clean URLs
+# =========================================
+RewriteEngine On
+RewriteBase /acts-attendance/
+
+# Huwag i-redirect ang POST requests (AJAX calls na tulad ng process_scan.php)
+# Huwag din i-redirect ang AJAX GET calls (dashboard.php?ajax=1)
+RewriteCond %{THE_REQUEST} /acts-attendance/([^.]+)\.php [NC]
+RewriteCond %{REQUEST_METHOD} GET
+RewriteCond %{QUERY_STRING} !ajax [NC]
+RewriteRule ^ /acts-attendance/%1 [NC,L,R=301]
+
+# Kung walang .php sa URL, internally load ang .php file
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+)$ $1.php [L,QSA]

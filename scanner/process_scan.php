@@ -9,7 +9,19 @@ header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['student_data']) && isset($_POST['scan_type'])) {
     $searchData = trim($_POST['student_data']);
+    
+    // ==========================================
+    // QR CODE DATA EXTRACTOR (SMART SCAN)
+    // Kung ang QR ay may comma (e.g., "12179,Maria Jessica P. Preginal")
+    // Kukunin lang ng system ang unang part bago mag-comma (12179).
+    // ==========================================
+    if (strpos($searchData, ',') !== false) {
+        $parts = explode(',', $searchData);
+        $searchData = trim($parts[0]); 
+    }
+    
     $scanType = trim($_POST['scan_type']); // 'time_in' or 'time_out'
+    $eventId = isset($_POST['event_id']) && !empty($_POST['event_id']) ? (int)$_POST['event_id'] : null;
     
     if (empty($searchData)) {
         echo json_encode(['status' => 'error', 'message' => 'Walang data na na-receive.']);
@@ -17,12 +29,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['student_data']) && is
     }
 
     try {
-        // Kunin ang System Settings (Dynamic Times)
-        $stmtFetch = $pdo->query("SELECT setting_key, setting_value FROM settings");
-        $settingsData = $stmtFetch->fetchAll(PDO::FETCH_KEY_PAIR);
-        $time_late = isset($settingsData['time_in_late']) ? $settingsData['time_in_late'] : '10:01:00';
-        $time_absent = isset($settingsData['time_in_absent']) ? $settingsData['time_in_absent'] : '12:01:00';
-        $time_out_start = isset($settingsData['time_out_start']) ? $settingsData['time_out_start'] : '17:00:00';
+        // Load time thresholds from EVENT (if selected) or fall back to global SETTINGS
+        if ($eventId) {
+            $stmtEvent = $pdo->prepare("SELECT * FROM events WHERE id = ? AND status = 'Active' LIMIT 1");
+            $stmtEvent->execute([$eventId]);
+            $eventData = $stmtEvent->fetch();
+            
+            if (!$eventData) {
+                echo json_encode(['status' => 'error', 'message' => 'Event not found or already closed.']);
+                exit();
+            }
+            
+            $time_late = $eventData['time_in_late'];
+            $time_absent = $eventData['time_in_absent'];
+            $time_out_start = $eventData['time_out_start'];
+        } else {
+            // Fallback to global settings (backward compatible)
+            $stmtFetch = $pdo->query("SELECT setting_key, setting_value FROM settings");
+            $settingsData = $stmtFetch->fetchAll(PDO::FETCH_KEY_PAIR);
+            $time_late = isset($settingsData['time_in_late']) ? $settingsData['time_in_late'] : '10:01:00';
+            $time_absent = isset($settingsData['time_in_absent']) ? $settingsData['time_in_absent'] : '12:01:00';
+            $time_out_start = isset($settingsData['time_out_start']) ? $settingsData['time_out_start'] : '17:00:00';
+        }
 
         // Hanapin ang estudyante (Active lang!)
         $stmt = $pdo->prepare("SELECT id, student_number, first_name, middle_initial, last_name, course_strand, section, year_grade_level FROM students WHERE student_number = ? AND status = 'Active' LIMIT 1");
@@ -116,9 +144,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['student_data']) && is
         $timeNow = date('H:i:s');
         $scannedBy = $_SESSION['user_id'];
         
-        // I-check ang attendance para ngayong araw
-        $stmtCheck = $pdo->prepare("SELECT id, time_in, time_out FROM attendance WHERE student_id = ? AND date = ? LIMIT 1");
-        $stmtCheck->execute([$student_id, $today]);
+        // I-check ang attendance para sa event + araw na ito
+        if ($eventId) {
+            $stmtCheck = $pdo->prepare("SELECT id, time_in, time_out FROM attendance WHERE student_id = ? AND date = ? AND event_id = ? LIMIT 1");
+            $stmtCheck->execute([$student_id, $today, $eventId]);
+        } else {
+            $stmtCheck = $pdo->prepare("SELECT id, time_in, time_out FROM attendance WHERE student_id = ? AND date = ? AND event_id IS NULL LIMIT 1");
+            $stmtCheck->execute([$student_id, $today]);
+        }
         $existingRecord = $stmtCheck->fetch();
 
         // -------------------------------------------------------------
@@ -137,8 +170,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['student_data']) && is
                 $in_status = 'Late';
             }
 
-            $stmtInsert = $pdo->prepare("INSERT INTO attendance (student_id, date, time_in, time_in_status, scanned_by) VALUES (?, ?, ?, ?, ?)");
-            if ($stmtInsert->execute([$student_id, $today, $timeNow, $in_status, $scannedBy])) {
+            $stmtInsert = $pdo->prepare("INSERT INTO attendance (student_id, date, event_id, time_in, time_in_status, scanned_by) VALUES (?, ?, ?, ?, ?, ?)");
+            if ($stmtInsert->execute([$student_id, $today, $eventId, $timeNow, $in_status, $scannedBy])) {
                 $timeInDisplay = date("h:i A", strtotime($timeNow));
                 echo json_encode(['status' => 'success', 'message' => "Time In ($in_status): $fullName - $timeInDisplay"]);
             } else {

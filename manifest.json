@@ -1,0 +1,26 @@
+{
+    "name": "ACTS Attendance Scanner",
+    "short_name": "ACTS Scanner",
+    "description": "Attendance scanning system for ACTS Computer College",
+    "start_url": "/acts-attendance/login.php",
+    "scope": "/acts-attendance/",
+    "display": "fullscreen",
+    "orientation": "portrait",
+    "background_color": "#033500",
+    "theme_color": "#033500",
+    "categories": ["education", "utilities"],
+    "icons": [
+        {
+            "src": "/acts-attendance/assets/img/acts-logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/acts-attendance/assets/img/acts-logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

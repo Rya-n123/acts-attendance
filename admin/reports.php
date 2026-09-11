@@ -22,6 +22,10 @@ $filter_course = isset($_GET['course_strand']) ? $_GET['course_strand'] : '';
 $filter_year = isset($_GET['year_grade_level']) ? $_GET['year_grade_level'] : '';
 $filter_section = isset($_GET['section']) ? $_GET['section'] : '';
 $filter_status = isset($_GET['status']) ? $_GET['status'] : ''; // NEW: Status Filter
+$filter_event = isset($_GET['event_id']) ? $_GET['event_id'] : '';
+
+// Load events for dropdown
+$allEvents = $pdo->query("SELECT id, event_name, event_date FROM events ORDER BY event_date DESC")->fetchAll();
 
 // Get System Settings for Absent Threshold
 $stmtSettings = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'time_in_absent'");
@@ -32,12 +36,15 @@ $current_date = date('Y-m-d');
 $current_time = date('H:i:s');
 
 $sql = "SELECT a.id as attendance_id, s.student_number, s.first_name, s.middle_initial, s.last_name, s.department, s.course_strand, s.year_grade_level, s.section, 
-               a.time_in, a.time_out, a.time_in_status, a.time_out_status 
+               a.time_in, a.time_out, a.time_in_status, a.time_out_status, 
+               e.event_name
         FROM students s 
-        LEFT JOIN attendance a ON s.id = a.student_id AND a.date = :date 
+        LEFT JOIN attendance a ON s.id = a.student_id AND a.date = :date" . (!empty($filter_event) ? " AND a.event_id = :event_id" : "") . "
+        LEFT JOIN events e ON a.event_id = e.id 
         WHERE s.status = 'Active'";
 
 $params = [':date' => $filter_date];
+if (!empty($filter_event)) { $params[':event_id'] = $filter_event; }
 
 if (!empty($filter_dept)) { $sql .= " AND s.department = :dept"; $params[':dept'] = $filter_dept; }
 if (!empty($filter_course)) { $sql .= " AND s.course_strand = :course"; $params[':course'] = $filter_course; }
@@ -109,11 +116,23 @@ $totalFiltered = count($final_reports);
 
             <!-- Filter Section -->
             <div class="admin-card">
-                <form method="GET" action="reports.php" class="filter-form">
-                    <div class="filter-group">
+                                <form method="GET" action="reports.php" class="filter-form" id="reportFilterForm">
+                                    <div class="filter-group">
                         <label>Date</label>
-                        <input type="date" name="date" value="<?php echo htmlspecialchars($filter_date); ?>" required>
+                        <input type="date" name="date" value="<?php echo htmlspecialchars($filter_date); ?>" onchange="this.form.submit()">
                     </div>
+                    <div class="filter-group">
+                        <label>Event</label>
+                        <select name="event_id" style="padding: 8px; border: 1px solid #ccc; border-radius: 5px;" onchange="this.form.submit()">
+                            <option value="">All Events</option>
+                            <?php foreach ($allEvents as $evt): ?>
+                                <option value="<?php echo $evt['id']; ?>" <?php echo $filter_event == $evt['id'] ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($evt['event_name']); ?> (<?php echo date('M d', strtotime($evt['event_date'])); ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
                     <!-- Nilagyan natin ng onchange at ID para mag-trigger sa JavaScript -->
                     <div class="filter-group">
                         <label>Department</label>
@@ -138,7 +157,7 @@ $totalFiltered = count($final_reports);
                     </div>
                     <div class="filter-group">
                         <label>Section</label>
-                        <select name="section" id="filter-section">
+                        <select name="section" id="filter-section" onchange="this.form.submit()">
                             <option value="">All</option>
                             <?php foreach ($sections as $s): ?><option value="<?php echo htmlspecialchars($s); ?>" <?php if($filter_section == $s) echo 'selected'; ?>><?php echo htmlspecialchars($s); ?></option><?php endforeach; ?>
                         </select>
@@ -146,7 +165,7 @@ $totalFiltered = count($final_reports);
 
                     <div class="filter-group">
                         <label>Status</label>
-                        <select name="status">
+                        <select name="status" onchange="this.form.submit()">
                             <option value="">All</option>
                             <option value="Present" <?php if($filter_status == 'Present') echo 'selected'; ?>>Present</option>
                             <option value="Late" <?php if($filter_status == 'Late') echo 'selected'; ?>>Late</option>
@@ -310,9 +329,9 @@ $totalFiltered = count($final_reports);
             updateDropdowns();
             
             // I-force na i-select kung ano yung nasa URL natin (Fallback security)
-            document.getElementById('filter-course').value = "<?php echo $filter_course; ?>";
-            document.getElementById('filter-year').value = "<?php echo $filter_year; ?>";
-            document.getElementById('filter-section').value = "<?php echo $filter_section; ?>";
+            document.getElementById('filter-course').value = <?php echo json_encode($filter_course); ?>;
+            document.getElementById('filter-year').value = <?php echo json_encode($filter_year); ?>;
+            document.getElementById('filter-section').value = <?php echo json_encode($filter_section); ?>;
         };
     </script>
 
